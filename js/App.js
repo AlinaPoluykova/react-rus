@@ -35,7 +35,7 @@ class Article extends React.Component {
 			<div className="article">
 				<p className="news__author">{author}:</p>
 				<p className="news__text">{text}</p>
-				<a href="#" onClick={()=>{this.readmoreClick()}}className={'news__readmore ' + (visible ? 'none': '')}>Подробнее</a>
+				<a href="#" onClick={()=>{this.readmoreClick()}} className={'news__readmore ' + (visible ? 'none': '')}>Подробнее</a>
 				<p className={"big__text " + (visible ? '': 'none')}>{bigText}</p>
 			</div>
 		);
@@ -44,6 +44,15 @@ class Article extends React.Component {
 		this.setState({visible: true});
 	}
 }
+
+Article.propTypes = {
+	data: React.PropTypes.shape({
+		author: React.PropTypes.string.isRequired,
+		text: React.PropTypes.string.isRequired,
+		bigText: React.PropTypes.string.isRequired
+	})
+};
+
 class News extends React.Component {
 	constructor(props){
 		super();
@@ -75,14 +84,7 @@ class News extends React.Component {
 		);
 	}
 }
-
-News.propTypes = {
-	data: React.PropTypes.shape({
-		author: React.PropTypes.string.isRequired,
-		text: React.PropTypes.string.isRequired,
-		bigText: React.PropTypes.string.isRequired
-	})
-};
+News.propTypes = {data: React.PropTypes.array.isRequired};
 
 class Comments extends React.Component {
 	render(){
@@ -95,15 +97,89 @@ class Comments extends React.Component {
 }
 
 class App extends React.Component {
+	constructor(props){
+		super();
+		this.state = {news: my_news};
+	}
 	render(){
 		return (
 			<div className="app">
+				<Add />
 				<h3>Нововсти:</h3>
-				<News data={my_news}/> {/* свойство data added */}
+				<News data={this.state.news}/> {/* свойство data added */}
 				<Comments />
 			</div>
 		);
 	}
 }
+
+class Add extends React.Component {
+	constructor(props){
+		super();
+		this.state = {
+			agreeNotChecked: true,
+			authorIsEmpty: true,
+			textIsEmpty: true
+		};
+	}
+	onFieldChange(fieldName, e){
+		if(e.target.value.trim().length > 0){
+			this.setState({[''+fieldName]: false});
+		} else {
+			this.setState({[''+fieldName]: true});
+		}
+	}
+	componentDidMount(){
+		ReactDOM.findDOMNode(this.refs.author).focus();
+	}
+	onBtnClickHandler(e){
+		e.preventDefault();
+		let author = ReactDOM.findDOMNode(this.refs.author).value;
+		let text = ReactDOM.findDOMNode(this.refs.text).value;
+		alert(author + '\n' + text);
+	}
+	onCheckRuleClick(){
+		this.setState({agreeNotChecked: !this.state.agreeNotChecked});
+	}
+	render(){
+		let agreeNotChecked = this.state.agreeNotChecked;
+		let authorIsEmpty = this.state.authorIsEmpty;
+		let textIsEmpty = this.state.textIsEmpty;
+
+		return (
+			<form className="add cf">
+				<input
+					type="text"
+					className="add__author"
+					defaultValue=""
+					placeholder="Ваше имя"
+					ref="author"
+					onChange={(e)=>{this.onFieldChange('authorIsEmpty', e)}}
+					/>
+				<textarea
+					className="add__text"
+					defaultValue=""
+					placeholder="Текст новости"
+					ref="text"
+					onChange={(e)=>{this.onFieldChange('textIsEmpty', e)}}
+					></textarea>
+				<label className="add__checkrule">
+					<input type="checkbox" ref="checkrule" onChange={()=>{this.onCheckRuleClick()}}/> Я согласен с чем-то
+				</label>
+				<button
+					className="add__btn"
+					onClick={() => {this.onBtnClickHandler()}}
+					ref="alert_button"
+					disabled={agreeNotChecked || authorIsEmpty || textIsEmpty}>
+					Показать алерт
+				</button>
+			</form>
+		);
+	}
+}
+
+
+
+
 
 ReactDOM.render(<App/>, document.getElementById('root'));

@@ -21,6 +21,8 @@ let my_news = [
 	}
 ];
 
+window.ee = new EventEmitter();
+
 class Article extends React.Component {
 	constructor(props){
 		super();
@@ -96,26 +98,9 @@ class Comments extends React.Component {
 	}
 }
 
-class App extends React.Component {
-	constructor(props){
-		super();
-		this.state = {news: my_news};
-	}
-	render(){
-		return (
-			<div className="app">
-				<Add />
-				<h3>Нововсти:</h3>
-				<News data={this.state.news}/> {/* свойство data added */}
-				<Comments />
-			</div>
-		);
-	}
-}
-
 class Add extends React.Component {
 	constructor(props){
-		super();
+		super(props);
 		this.state = {
 			agreeNotChecked: true,
 			authorIsEmpty: true,
@@ -136,7 +121,17 @@ class Add extends React.Component {
 		e.preventDefault();
 		let author = ReactDOM.findDOMNode(this.refs.author).value;
 		let text = ReactDOM.findDOMNode(this.refs.text).value;
-		alert(author + '\n' + text);
+		let item = [{
+			author: author,
+			text: text,
+			bigText: '...'
+		}];
+
+		window.ee.emit('News add', item);
+		this.refs.author.value = '';
+		this.refs.text.value = '';
+		this.refs.checkrule.checked = false;
+		this.setState({textIsEmpty: true, agreeNotChecked: true, authorIsEmpty: true});
 	}
 	onCheckRuleClick(){
 		this.setState({agreeNotChecked: !this.state.agreeNotChecked});
@@ -168,12 +163,38 @@ class Add extends React.Component {
 				</label>
 				<button
 					className="add__btn"
-					onClick={() => {this.onBtnClickHandler()}}
+					onClick={(e) => {this.onBtnClickHandler(e)}}
 					ref="alert_button"
 					disabled={agreeNotChecked || authorIsEmpty || textIsEmpty}>
-					Показать алерт
+					Добавить новость
 				</button>
 			</form>
+		);
+	}
+}
+
+class App extends React.Component {
+	constructor(props){
+		super();
+		this.state = {news: my_news};
+	}
+	componentDidMount(){
+		window.ee.addListener('News add', (item)=>{
+			let newNews = item.concat(this.state.news);
+			this.setState({news: newNews});
+		});
+	}
+	componentWillUnmount(){
+		window.ee.removeListener('News add');
+	}
+	render(){
+		return (
+			<div className="app">
+				<Add />
+				<h3>Нововсти:</h3>
+				<News data={this.state.news}/> {/* свойство data added */}
+				<Comments />
+			</div>
 		);
 	}
 }
